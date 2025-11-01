@@ -8,6 +8,7 @@ import { css } from "@codemirror/lang-css";
 import { javascript } from "@codemirror/lang-javascript";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { EditorView } from "@codemirror/view";
 
 type FileNode = {
   name: string;
@@ -37,22 +38,21 @@ export default function VsCodePage() {
   const [popupAction, setPopupAction] = useState<null | (() => void)>(null);
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const editorRef = useRef<any>(null);
-
-  // Initialize structure hanya di client side
+  const editorRef = useRef<EditorView | null>(null);
+  // 🔹 FIX: Initialize structure dengan function wrapper
   useEffect(() => {
-    setIsClient(true);
-    
-    const saved = localStorage.getItem("vscode-structure");
-    
-    if (saved) {
-      setStructure(JSON.parse(saved));
-    } else {
-      setStructure([
-        { 
-          name: "index.html", 
-          type: "file", 
-          content: `<!DOCTYPE html>
+    const initializeStructure = () => {
+      setIsClient(true);
+      
+      const saved = localStorage.getItem("vscode-structure");
+      if (saved) {
+        setStructure(JSON.parse(saved));
+      } else {
+        setStructure([
+          { 
+            name: "index.html", 
+            type: "file", 
+            content: `<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -65,18 +65,21 @@ export default function VsCodePage() {
     <script src="src/script.js"></script>
 </body>
 </html>` 
-        },
-        {
-          name: "src",
-          type: "folder",
-          children: [
-            { name: "style.css", type: "file", content: "body { color: blue; }" },
-            { name: "script.js", type: "file", content: "console.log('Hi');" },
-          ],
-        },
-      ]);
-    }
-  }, []); // Empty dependency array
+          },
+          {
+            name: "src",
+            type: "folder",
+            children: [
+              { name: "style.css", type: "file", content: "body { color: blue; }" },
+              { name: "script.js", type: "file", content: "console.log('Hi');" },
+            ],
+          },
+        ]);
+      }
+    };
+
+    initializeStructure();
+  }, []);
 
   // Save structure to localStorage
   useEffect(() => {
@@ -296,7 +299,7 @@ export default function VsCodePage() {
     const htmlFile = Object.entries(allFiles).find(([k]) => k.endsWith(".html"));
     
     if (htmlFile) {
-      const [htmlFilename, htmlContent] = htmlFile;
+      const [, htmlContent] = htmlFile; // 🔹 FIX: Gunakan underscore untuk variable tidak terpakai
       
       // Extract CSS dan JS dari HTML untuk preview
       const cssLinks = htmlContent.match(/<link[^>]*href=["']([^"']*)["'][^>]*>/g) || [];

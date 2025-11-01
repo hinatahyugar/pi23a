@@ -31,23 +31,35 @@ export default function ProfilPage() {
   const [particles, setParticles] = useState<Particle[]>([])
   const [isClient, setIsClient] = useState(false)
 
-  // Initialize particles hanya di client side
-  useEffect(() => {
-    if (!isClient) setIsClient(true);
-    
-    const handleResize = () => {
-      const initialParticles = Array.from({ length: 20 }, (_, i) => ({
-        id: i,
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-      }));
-      setParticles(initialParticles);
-    };
+ // 🔹 FIX: Initialize particles dengan cara yang benar & aman untuk React 18
+useEffect(() => {
+  if (typeof window === "undefined") return;
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isClient]);
+  // Tandai sudah client (non-synchronous)
+  setTimeout(() => {
+    setIsClient(true);
+  }, 0);
+
+  // Fungsi untuk mengatur ulang partikel
+  const handleResize = () => {
+    const initialParticles = Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+    }));
+    setParticles(initialParticles);
+  };
+
+  // Jalankan pertama kali dan ketika window di-resize
+  handleResize();
+  window.addEventListener("resize", handleResize);
+
+  // Cleanup
+  return () => {
+    window.removeEventListener("resize", handleResize);
+  };
+}, []);
+
 
   const anggota: Anggota[] = [
     {
